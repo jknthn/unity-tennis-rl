@@ -1,0 +1,6 @@
+venv/
+.ipynb_checkpoints
+*.log
+__pycache__
+runs/ga -
+.vscode/
