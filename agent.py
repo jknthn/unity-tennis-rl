@@ -16,18 +16,20 @@ from imported_utils import Batcher
 
 class PPOAgent(object):
     
-    def __init__(self, environment, brain_name, policy_networks, optimizier, config, agent_index):
+    def __init__(self, environment, brain_name, policy_network, optimizier, config):
         self.config = config
         self.hyperparameters = config['hyperparameters']
-        self.networks = policy_networks
+        self.network = policy_network
         self.optimizier = optimizier
         self.total_steps = 0
         self.all_rewards = np.zeros(config['environment']['number_of_agents'])
         self.episode_rewards = []
         self.environment = environment
         self.brain_name = brain_name
-        self.agent_index = agent_index
-
+        self.number_of_agents = config['environment']['number_of_agents']
+        self.state_size = config['environment']['state_size']
+        self.action_size = config['environment']['action_size']
+        
         env_info = environment.reset(train_mode=True)[brain_name]    
         self.states = env_info.vector_observations              
 
@@ -39,7 +41,7 @@ class PPOAgent(object):
         self.states = env_info.vector_observations  
         states = self.states
         for _ in range(hyperparameters['rollout_length']):
-            actions, log_probs, _, values = self.network(states[self.agent_index], full_observation=states)
+            actions, log_probs, _, values = self.network(states)
             env_info = self.environment.step(actions.cpu().detach().numpy())[self.brain_name]
             next_states = env_info.vector_observations
             rewards = env_info.rewards
@@ -50,7 +52,7 @@ class PPOAgent(object):
                 if terminals[i]:
                     self.episode_rewards.append(self.all_rewards[i])
                     self.all_rewards[i] = 0
-                    
+            
             rollout.append([states, values.detach(), actions.detach(), log_probs.detach(), rewards, 1 - terminals])
             states = next_states
 
@@ -65,9 +67,10 @@ class PPOAgent(object):
             states, value, actions, log_probs, rewards, terminals = rollout[i]
             terminals = torch.Tensor(terminals).unsqueeze(1)
             rewards = torch.Tensor(rewards).unsqueeze(1)
-            actions = torch.Tensor(actions)
-            states = torch.Tensor(states)
+            actions = torch.Tensor(actions).view(-1, self.number_of_agents, self.action_size)
+            states = torch.Tensor(states).view(-1, self.number_of_agents, self.state_size)
             next_value = rollout[i + 1][1]
+
             returns = rewards + hyperparameters['discount_rate'] * terminals * returns
 
             td_error = rewards + hyperparameters['discount_rate'] * terminals * next_value.detach() - value.detach()
@@ -75,6 +78,7 @@ class PPOAgent(object):
             processed_rollout[i] = [states, actions, log_probs, returns, advantages]
 
         states, actions, log_probs_old, returns, advantages = map(lambda x: torch.cat(x, dim=0), zip(*processed_rollout))
+        
         advantages = (advantages - advantages.mean()) / advantages.std()
 
         batcher = Batcher(states.size(0) // hyperparameters['mini_batch_number'], [np.arange(states.size(0))])
@@ -94,9 +98,15 @@ class PPOAgent(object):
                 obj = ratio * sampled_advantages
                 obj_clipped = ratio.clamp(1.0 - hyperparameters['ppo_clip'],
                                           1.0 + hyperparameters['ppo_clip']) * sampled_advantages
-                policy_loss = -torch.min(obj, obj_clipped).mean(0) - hyperparameters['entropy_coefficent'] * entropy_loss.mean()
+                policy_loss = -torch.min(obj, obj_clipped).mean() - hyperparameters['entropy_coefficent'] * entropy_loss.mean()
 
-                value_loss = 0.5 * (sampled_returns - values).pow(2).mean()
+
+                # print(policy_loss.shape)
+                # print(sampled_returns.shape)
+                # print(values.view(-1, values.shape[1]).mean(1).shape)
+                value_loss = 0.5 * (sampled_returns - values.view(-1, values.shape[1]).mean(1)).pow(2).mean()
+
+                # print(policy_loss, policy_loss.shape)
 
                 self.optimizier.zero_grad()
                 (policy_loss + value_loss).backward()
