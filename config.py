@@ -37,6 +37,12 @@ class NoiseConfig(object):
     theta = 0.15
     sigma = 0.2
 
+class TrainingConfig(object):
+    episode_count = 10000
+    max_t = 1000
+    solve_score = 0.5
+    continue_after_solve = True
+
 class Config(object):
 
     def __init__(self):
@@ -44,6 +50,7 @@ class Config(object):
         self.general = GeneralConfig()
         self.hyperparameters = HyperparametersConfig()
         self.noise = NoiseConfig()
+        self.training = TrainingConfig()
         self.actor = NetworkConfig(
             input_size=self.environment.state_size,
             output_size=self.environment.action_size,
