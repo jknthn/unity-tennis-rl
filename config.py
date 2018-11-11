@@ -30,6 +30,10 @@ class HyperparametersConfig(object):
     weight_decay = 0.0
     buffer_size = int(1e5)
     batch_size = 128
+    update_frequency = 2
+    gamma = 0.99
+    noise_start = 1.0
+    noise_decay = 1.0
 
 
 class NoiseConfig(object):
@@ -39,9 +43,9 @@ class NoiseConfig(object):
 
 class TrainingConfig(object):
     episode_count = 10000
-    max_t = 1000
+    max_t = 2000
     solve_score = 0.5
-    continue_after_solve = True
+    continue_after_solve = False
 
 class Config(object):
 
