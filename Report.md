@@ -57,7 +57,7 @@ First model that solved the environment is saved in `./models/by_score/` directo
 
 ### Random
 
-![](images/agent_begin.gif)
+![](images/agent_random.gif)
 
 ### Score 0.23
 
