@@ -17,7 +17,6 @@ parser.add_argument('--file_prefix', default=None, help='Set the file for agent 
 parser.add_argument('--playthroughs', default=10, type=int, help='Number of playthroughs played in a play mode')
 parser.add_argument('--sleep', default=0, type=int, help='Time before environment starts in a play mode [seconds]')
 arguments = parser.parse_args()
-print(parser.parse_args())
 
 env = UnityEnvironment(file_name='./Tennis.app', seed=config.general.seed)
 brain_name = env.brain_names[0]

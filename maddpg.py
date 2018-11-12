@@ -41,7 +41,7 @@ class MADDPGAgent():
             print(f'Files loaded with prefix {file_prefix}')
 
     def step(self, all_states, all_actions, all_rewards, all_next_states, all_dones):
-        all_states = all_states.reshape(1, -1)
+        all_states = all_states.reshape(1, -1) 
         all_next_states = all_next_states.reshape(1, -1)
         self.memory.add(all_states, all_actions, all_rewards, all_next_states, all_dones)
         self.t = (self.t + 1) % self.update_frequency
