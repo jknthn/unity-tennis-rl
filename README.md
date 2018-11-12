@@ -31,9 +31,6 @@ Make sure you have python 3.6 installed and virtual environment of your choosing
 
 to install python dependencies.
 
-
-Files in repository:
-
 You can find trained model weights in a `/models` directory. In `by_score` subdirectory are saved models with apropriate score. 
 
 Code for single DDPG agent is in `ddpgagent.py` file and is joined with MADDPG algorithm in `maddpg.file`. 
